@@ -65,7 +65,7 @@ def register():
 
         except BaseException as err:
             con.rollback()
-            print(f"error in insert operation : Unexpected {err=}, {type(err)=}")
+            print(f"error in insert operation : Unexpected {err}, {type(err)=}")
             con.close()
        
     return render_template("registration.html")
