@@ -15,8 +15,8 @@ conn.execute('CREATE TABLE IF NOT EXISTS user (username TEXT, password TEXT, ema
 print("Table created successfully");
 
 app.config['S3_BUCKET'] = "storage-bucket-gr"
-app.config['S3_KEY'] = "AKIAQV3DBC4HY46X23S5"
-app.config['S3_SECRET'] = "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"
+app.config['S3_KEY'] = ""
+app.config['S3_SECRET'] = ""
 app.config['S3_LOCATION'] = 'http://{}.s3.us-east-2.amazonaws.com/'.format(app.config['S3_BUCKET'])
 
 @app.route('/')
