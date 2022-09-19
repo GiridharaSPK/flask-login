@@ -1,33 +1,27 @@
 from flask import Flask, render_template, url_for
 from flask_login import UserMixin
 from flask import request, redirect
+from werkzeug.utils import secure_filename
 import sqlite3
-# from flask_wtf import wtforms
-# from wtforms import StringField, PasswordField, SubmitField
-# from wtforms.validators import InputRequired, Length, ValidationError
-
+import boto3
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URL'] = 'sqlite:///database.db'
-# app.config['SECRET_KEY'] = 'mySecretKey'
 
 conn = sqlite3.connect('database.db')
 print("Opened database successfully");
 
 # conn.execute('DROP TABLE user');
-conn.execute('CREATE TABLE IF NOT EXISTS user (username TEXT, password TEXT, email EMAIL, first_name TEXT, last_name TEXT)');
+conn.execute('CREATE TABLE IF NOT EXISTS user (username TEXT, password TEXT, email EMAIL, first_name TEXT, last_name TEXT, link TEXT)');
 print("Table created successfully");
+
+app.config['S3_BUCKET'] = "storage-bucket-gr"
+app.config['S3_KEY'] = "AKIAQV3DBC4HY46X23S5"
+app.config['S3_SECRET'] = "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"
+app.config['S3_LOCATION'] = 'http://{}.s3.us-east-2.amazonaws.com/'.format(app.config['S3_BUCKET'])
 
 @app.route('/')
 def init():
-    return render_template('login.html')
-
-@app.route('/table')
-def see_table():
-    with sqlite3.connect("database.db") as con:
-        cur = con.cursor()
-        result = cur.execute("SELECT count(*) FROM user")
-    return render_template("table.html", result = result)        
+    return render_template('login.html')       
 
 @app.route('/login', methods = ['POST'])
 def login():
@@ -47,32 +41,55 @@ def login():
 def register():
     if request.method == 'POST':
         try:
+            f = request.files['file']
+            s3 = boto3.client(
+                "s3",
+                aws_access_key_id=app.config['S3_KEY'],
+                aws_secret_access_key=app.config['S3_SECRET']
+            )
+            s3.upload_fileobj(f, app.config['S3_BUCKET'], f.filename)
+
             username = request.form['username']
             password = request.form['password']
             email = request.form['email']
             fname = request.form['fname']
             lname = request.form['lname']
-
+            link = app.config['S3_LOCATION']+f.filename
+            
             with sqlite3.connect("database.db") as con:
                 cur = con.cursor()
-                cur.execute("INSERT INTO user (username,password,email,first_name,last_name) VALUES (?,?,?,?,?)",(username,password,email,fname,lname))
+                cur.execute("INSERT INTO user (username,password,email,first_name,last_name, link) VALUES (?,?,?,?,?,?)",(username,password,email,fname,lname, link))
                 con.commit()
-            return render_template("home.html", result = [username, password, email, fname, lname])
             
+            return render_template("home.html", result = [username, password, email, fname, lname, ])
+
         except BaseException as err:
             con.rollback()
             print(f"error in insert operation : Unexpected {err=}, {type(err)=}")
-            # raise
-            # return render_template("registration.html")
             con.close()
-
-            # return redirect(f"/userdetails/{username}")
+       
     return render_template("registration.html")
 
 @app.route('/userdetails/<name>')
 def user_home(name):
     # return f"Your name is {name}"
     return render_template("userdetails.html")
+
+# @app.route('/uploader', methods = ['GET', 'POST'])
+# def upload_file():
+#     if(request.method == 'POST'):
+#         f = request.files['file']
+#         # f.save(secure_filename(f.filename))
+#         # s3 = boto3.client('s3')
+#         s3 = boto3.client(
+#             "s3",
+#             aws_access_key_id=app.config['S3_KEY'],
+#             aws_secret_access_key=app.config['S3_SECRET']
+#         )
+#         BUCKET = "storage-bucket-gr"
+#         s3.upload_fileobj(f, BUCKET, f.filename)
+#         return 'file uploaded successfully'
+
 
 if __name__ == '__main__':
     app.run(debug = True)

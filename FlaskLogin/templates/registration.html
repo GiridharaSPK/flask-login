@@ -10,16 +10,13 @@
     <h1>Register</h1>
     <p>Create an account by entering your username and password</p>
 
-<form action="/register" method = "POST">
+<form action="/register" method = "POST"  enctype = "multipart/form-data">
 
     <label for="username">Username:</label><br>
     <input type="text" name="username" id="username"><br>
 
     <label for="password">Password:</label><br>
     <input type="password" name="password" id="password"><br>
-
-    <!-- <label for="cpassword">Confirm Password:</label><br>
-    <input type="password" name="cpassword" id="cpassword"><br> -->
 
     <label for="email">Email:</label><br>
     <input type="email" name="email" id="email"><br>
@@ -30,6 +27,8 @@
     <label for="lname">Last name:</label><br>
     <input type="text" name="lname" id="lname"><br>
 
+    <input type = "file" name = "file" />
+    <br>
     <input type="submit" value="Register">
 </form>
 
